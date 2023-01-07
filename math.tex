@@ -1,0 +1,156 @@
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bbm}
+\usepackage{mathabx}
+
+\newcommand{\eps}{{\varepsilon}}
+
+% bold symbols
+\newcommand{\bx}{{\mathbf x}}
+\newcommand{\bz}{{\mathbf z}}
+\newcommand{\bt}{{\mathbf t}}
+\newcommand{\by}{{\mathbf y}}
+\newcommand{\bl}{{\mathbf l}}
+\newcommand{\bu}{{\mathbf u}}
+\newcommand{\br}{{\mathbf r}}
+\newcommand{\bk}{{\mathbf k}}
+\newcommand{\bm}{{\mathbf m}}
+\newcommand{\bp}{{\mathbf p}}
+\newcommand{\bj}{{\mathbf j}}
+\newcommand{\ba}{{\mathbf a}}
+\newcommand{\bw}{{\mathbf w}}
+\newcommand{\bs}{{\mathbf s}}
+\newcommand{\bb}{{\mathbf b}}
+\newcommand{\be}{{\mathbf e}}
+\newcommand{\bd}{{\mathbf d}}
+\newcommand{\bg}{{\mathbf g}}
+
+\newcommand{\bE}{{\mathbf E}}
+\newcommand{\bX}{{\mathbf X}}
+\newcommand{\bS}{{\mathbf S}}
+\newcommand{\bZ}{{\mathbf Z}}
+\newcommand{\bA}{{\mathbf A}}
+\newcommand{\bD}{{\mathbf D}}
+\newcommand{\bM}{{\mathbf M}}
+\newcommand{\bC}{{\mathbf C}}
+\newcommand{\bG}{{\mathbf G}}
+\newcommand{\bI}{{\mathbf I}}
+\newcommand{\bB}{{\mathbf B}}
+\newcommand{\bP}{{\mathbf P}}
+\newcommand{\bJ}{{\mathbf J}}
+\newcommand{\bR}{{\mathbf R}}
+\newcommand{\bU}{{\mathbf U}}
+\newcommand{\bT}{{\mathbf T}}
+\newcommand{\bH}{{\mathbf H}}
+\newcommand{\bY}{{\mathbf Y}}
+\newcommand{\bW}{{\mathbf W}}
+\newcommand{\bL}{{\mathbf L}}
+\newcommand{\bK}{{\mathbf K}}
+\newcommand{\bQ}{{\mathbf Q}}
+
+\newcommand{\balpha}{{\boldsymbol \alpha}}
+\newcommand{\bbeta}{{\boldsymbol \beta}}
+\newcommand{\bmu}{{\boldsymbol \mu}}
+\newcommand{\bTheta}{{\boldsymbol \Theta}}
+\newcommand{\bsigma}{{\boldsymbol \sigma}}
+\newcommand{\btheta}{{\boldsymbol \theta}}
+\newcommand{\bdelta}{{\boldsymbol \delta}}
+\newcommand{\bxi}{{\boldsymbol \xi}}
+\newcommand{\bphi}{{\boldsymbol \phi}}
+\newcommand{\bpsi}{{\boldsymbol \psi}}
+\newcommand{\btau}{{\boldsymbol \tau}}
+\newcommand{\bzeta}{{\boldsymbol \zeta}}
+\newcommand{\bepsilon}{{\boldsymbol \epsilon}}
+\newcommand{\beps}{{\boldsymbol \varepsilon}}
+\newcommand{\bgamma}{{\boldsymbol \gamma}}
+\newcommand{\bnu}{{\boldsymbol \nu}}
+\newcommand{\bPhi}{{\boldsymbol \Phi}}
+\newcommand{\bSigma}{{\boldsymbol \Sigma}}
+\newcommand{\blambda}{{\boldsymbol \lambda}}
+\newcommand{\bpi}{{\boldsymbol \pi}}
+
+\newcommand{\bone}{{\mathbf 1}}
+\newcommand{\bzero}{{\mathbf 0}}
+
+% blackboard symbols
+\newcommand{\bbR}{{\mathbb R}}
+\newcommand{\bbE}{{\mathbb E}}
+\newcommand{\bbN}{{\mathbb N}}
+\newcommand{\bbP}{{\mathbb P}}
+\newcommand{\ind}{{\mathbbm 1}}
+
+% calligraphic symbols
+\newcommand{\cA}{\mathcal A}
+\newcommand{\cB}{\mathcal B}
+\newcommand{\cD}{\mathcal D}
+\newcommand{\cE}{\mathcal E}
+\newcommand{\cG}{\mathcal G}
+\newcommand{\cH}{\mathcal H}
+\newcommand{\cI}{\mathcal I}
+\newcommand{\cL}{\mathcal L}
+\newcommand{\cM}{\mathcal M}
+\newcommand{\cN}{\mathcal N}
+\newcommand{\cO}{\mathcal O}
+\newcommand{\cP}{\mathcal P}
+\newcommand{\cQ}{\mathcal Q}
+\newcommand{\cS}{\mathcal S}
+\newcommand{\cV}{\mathcal V}
+\newcommand{\cW}{\mathcal W}
+\newcommand{\cT}{\mathcal T}
+
+
+
+% math operators
+\DeclareMathOperator{\NN}{NN}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\logit}{logit}
+\DeclareMathOperator{\ELBO}{ELBO}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\prox}{prox}
+\DeclareMathOperator{\BIC}{BIC}
+\DeclareMathOperator{\EBIC}{EBIC}
+\DeclareMathOperator{\AIC}{AIC}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\clr}{clr}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\tvec}{vec}
+\DeclareMathOperator{\ESS}{ESS}
+\DeclareMathOperator{\df}{df}
+\DeclareMathOperator{\RSS}{RSS}
+
+% distributions
+\DeclareMathOperator{\Bernoulli}{Bernoulli}
+\DeclareMathOperator{\Multinomial}{Multinomial}
+\DeclareMathOperator{\Hypergeometric}{Hypergeometric}
+\DeclareMathOperator{\Binomial}{Binomial}
+\DeclareMathOperator{\Poisson}{Poisson}
+\DeclareMathOperator{\tGamma}{Gamma}
+\DeclareMathOperator{\InvGamma}{InvGamma}
+\DeclareMathOperator{\tBeta}{Beta}
+\DeclareMathOperator{\ZIP}{ZIP}
+\DeclareMathOperator{\ZINB}{ZINB}
+\DeclareMathOperator{\NB}{NegativeBinomial}
+\DeclareMathOperator{\ED}{ED}
+\DeclareMathOperator{\Tw}{Tweedie}
+\DeclareMathOperator{\QP}{QuasiPoisson}
+\DeclareMathOperator{\Dirichlet}{Dirichlet}
+\DeclareMathOperator{\DP}{DP}
+\DeclareMathOperator{\GEM}{GEM}
+\DeclareMathOperator{\Categorical}{Categorical}
+\DeclareMathOperator{\Uniform}{Uniform}
+\DeclareMathOperator{\iid}{iid}
+
+\newcommand{\GP}{\mathcal {GP}}
+\newcommand{\TGP}{\mathcal {TGP}}
+\newcommand{\SMGP}{\mathcal {SMGP}}
+\newcommand{\SMTGP}{\mathcal {SMTGP}}
+\newcommand{\WP}{\mathcal {WP}}
+\newcommand{\IWP}{\mathcal {IWP}}
+\newcommand{\MN}{\mathcal {MN}}
+
+% differential operator
+\makeatletter \renewcommand\d[1]{\ensuremath{%
+  \;\mathrm{d}#1\@ifnextchar\d{\!}{}}}
+\makeatother

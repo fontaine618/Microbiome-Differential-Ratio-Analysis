@@ -1,0 +1,383 @@
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage[
+paperwidth=210mm,
+paperheight=297mm,
+left=50pt,
+top=50pt,
+textwidth=345pt,
+marginparsep=25pt,
+marginparwidth=124pt,
+textheight=692pt,
+footskip=50pt
+]{geometry}
+
+\usepackage{float}
+\usepackage{booktabs}
+\input{math.tex}
+\title{Microbiome Differential Ratio Analysis -- Notes}
+
+% --------------------------------------------------------------------------------------
+% Comments
+\usepackage{todonotes}
+\newcommand{\mukai}[1]{\todo[color=green!20, size=\small]{[MW] #1}}
+\newcommand{\simon}[1]{\todo[color=orange!20, size=\small]{[SF] #1}}
+\newcommand{\gen}[1]{\todo[color=blue!20, size=\small]{[GL] #1}}
+\newcommand{\hui}[1]{\todo[color=purple!20, size=\small]{[HJ] #1}}
+% --------------------------------------------------------------------------------------
+
+
+\begin{document}
+
+\maketitle
+
+\simon{Example comment from Simon}
+\mukai{Example comment from Mukai}
+\gen{Example comment from Gen}
+\hui{Example comment from Hui}
+
+% ======================================================================================
+\section{Problem description \& Notation}
+% ======================================================================================
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{rlp{8cm}}
+        \toprule
+        \textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+        \midrule
+        $i$ & $1,\ldots, n$ & Subject index \\ 
+        $j,k$ & $1, \ldots, p$ & Taxa index \\ 
+        $\bx_i$ & $\bbR^{p}$ & Taxa count/proportion vector for subject $i$\\ 
+        $p_{jk}$ & $[0,1]$ & $p$-value for a differential ratio test between taxa $j$ and $k$ \\ 
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+
+% ======================================================================================
+\section{Motivation: Beta-Uniform mixture}
+% ======================================================================================
+
+Suppose we perform all $p(p-1)/2$ pairwise tests between taxa $j$ and taxa $k$. Under the null hypothesis, we
+expect the $p$-value for the test to be uniformly distributed between 0 and 1. For non-null hypothesis, we expect
+the $p$-value to have a non-uniform distribution over the unit interval and that this distribution is skewed
+towards 0. A common modeling assumption for the non-null distribution is $\tBeta(a, 1)$. Indeed, this 
+is commonly known as a Beta-Uniform Mixture (BUM) and it is often used to model a collection of $p$-values
+containing some nulls and some non-nulls.
+
+Hence, for a taxa $j$, we can consider all $p-1$ other taxa and model the collection of $p$-values accordingly
+\begin{align*}
+    p_{jk} \sim \pi_j \underbrace{\Uniform[0,1]}_{\text{nulls}} +
+    (1-\pi_j) \underbrace{\tBeta(a_j, 1)}_{\text{non-nulls}},\qquad k\neq j
+\end{align*}
+We can borrow from this decomposition to propose a model for each pairwise test.
+
+% ======================================================================================
+\section{Strength-corrected Stochastic Block Model for Weighted Networks}
+% ======================================================================================
+
+What we know/expect:
+\begin{itemize}
+    \item If taxa $j$ and $k$ are DA, then the pairwise test could be non-null (it is possible the change is the same)
+    \item If taxa $j$ is DA, but not $k$, then the pairwise test should be non-null
+    \item If both $j$ and $k$ are not DA, then the pairwise test should be null
+\end{itemize}
+At the population level, we thus get a standard SBM with:
+\begin{itemize}
+    \item Two communities, determined by DA vs non-DA
+    \item All edges between non-DA and DA
+    \item Most edges DA to DA
+    \item No edges non-DA to non-DA
+\end{itemize}
+This resembles a core-periphery graph structure.
+
+However, we rather observe the network of $p$-values. We consider the following version of SCWSBM.
+Each node $j$ is assigned to a community $c_j\in [C]$. Each node $j$ also has a parameter $\theta_j\geqslant 0$,
+the strength-correction. For each pair of communities $cd$, we define a model $f_{cd}$ that depends on some parameter
+$a_{cd}$ and $\theta_j,\theta_k$ (provided $c_j=c$ and $c_k=d$).
+\begin{align*}
+    c_j &\sim \Categorical(\bpi) \\ 
+    p_{jk} &\sim f_{c_jc_k} (\cdot\mid a_{c_jc_k}, \theta_j,\theta_k)
+\end{align*}
+
+In our case, we could define two communities indexed by 0 (nulls) and 1 (non-nulls). The models would be:
+\begin{align*}
+    f_{00}(p) &= \Uniform_{[0, 1]}(p)  & \text{(non-DA to non-DA)}\\
+    f_{10}(p\mid a_{10}, \theta_1, \theta_0) &= \tBeta(p\mid a_{10}\theta_1\theta_0, 1) & \text{(DA to non-DA)}\\
+    f_{11}(p\mid a_{11}, \theta_1, \theta_2) &= \tBeta(p\mid a_{11}\theta_1\theta_2, 1) & \text{(DA to DA)}\\
+\end{align*}\simon{Not sure if it should be $\tBeta(a,1)$ or $\tBeta(1,b)$?}
+with
+\begin{align*}
+    \theta_j \geqslant 1, a_{cd} \geqslant 1
+\end{align*}
+This condition ensures the correct interpretation that the components corresponds to non-nulls.
+
+
+Comments:
+\begin{itemize}
+    \item The strength-correction $\theta_j$ can be understood as the tendency to produce $p$-values
+    close to 0 when non-null. This might be associated with the variability of the taxa, or its density.
+    For example, we expect to have less power for rare taxa, which could transpire into a smaller $\theta_j$.
+    \item We could start with a simpler approach without strength correction: estimation
+    should be simpler/faster/more stable. Eventually we could compare with the more flexible 
+    model to see if we gain anything. I think it would be interesting to compare the
+    estimated $\theta_j$ to properties of the counts (sparsity, variability, etc.)
+    \item This formulation does not fully capture the expected behavior, since the DA to DA model
+    does not allow for nulls. One option is to do nothing and expect $a_{11}<a_{10}$. Otherwise,
+    we could further choose a BUM for that component
+\end{itemize}
+
+
+% ======================================================================================
+\section{Generative model}
+% ======================================================================================
+
+The above method models the edge-level $p$-values directly. I wonder if we could describe a 
+generative model that generates this structure starting from the node level instead? 
+Here, we probably
+need more assumptions about what DA means and how it translates to the pairwise test. 
+In particular, we probably need to be careful about what the null hypotheses are. 
+This exercise may also help to extract what are the sufficient conditions on the $p$-values
+for this approach to work \& make sense.
+
+% ======================================================================================
+\section{EM algorithm}
+% ======================================================================================
+
+The joint distribution is given by
+\begin{align*}
+    p(\bP, \bz\mid \ba, \btheta, \bpi)
+    = 
+    \prod_{j=1}^{p}  \pi_{c_j}
+    \times \prod_{j<k} f_{c_jc_k}(p_{jk}\mid a_{c_jc_k}, \theta_j, \theta_k)
+\end{align*}
+We can write it in a longer form
+\begin{align*}
+    p(\bP, \bz\mid \ba, \btheta, \bpi)
+    = 
+    \prod_{c=0}^{1}\prod_{j=1}^{p}  \pi_{c}^{\ind[z_j=c]}
+    \times \prod_{c,d=0}^1\prod_{j<k} [f_{cd}(p_{jk}\mid a_{cd}, \theta_j, \theta_k)]^{\ind[z_j=c]\ind[z_k=d]}
+\end{align*}
+so that the joint log-likelihood can be written as
+\begin{align*}
+    \ell(\ba, \btheta, \bpi) 
+    =
+    \sum_{c=0}^{1}\sum_{j=1}^{p} \ind[z_j=c]\log\pi_c
+    + 
+    \sum_{c,d=0}^{1}\sum_{j<k} 
+    \ind[z_j=c]\ind[z_k=d]
+    \log f_{cd}(p_{jk}\mid a_{cd}, \theta_j, \theta_k)
+\end{align*}
+
+For the E-step, we need to compute the posterior distribution for $Z_j$. In particular, we need 
+$\bbP[Z_j=c]$ for all $c$ and $\bbP[Z_j=c, Z_k=d]$ for all $c,d$, so we can replace it in the expressions. 
+However, the products
+$\ind[z_j=c]\ind[z_k=d]$ are harder to deal with, so a Variational EM is used instead, where
+we assume factorization across $j$ for the approximate posterior of $\bz$. 
+\simon{It appears most SBM for weighted edges use a VEM approach.}
+Hence, we parameterize the
+approximate posterior by
+\begin{align*}
+    q(\bz\mid \btau) = \prod_{j=1}^{p} \prod_{c=0}^{1} \tau_{j,c}^{\ind[z_j=c]}
+\end{align*}
+with the constraints $\sum_{c=0}^{1}\tau_{j,c}=1$. This probably leads to a fixed point algorithm 
+(See Mariadassou, 2010, Section 4.2). The M step probably looks like a few weighted MLE problems: since
+the $\theta_j$ will be shared between the models, there will probably not be a closed form solution and
+will require some gradient- or fixed-point approach.
+
+\subsection{Variational inference}
+
+For the E-step, we need to produce the $Q$ function, defined by the expected value of the joint 
+log-likelihood, where the integrate the latent variables. Here, the latent variables are the 
+community assignments $z_j$. Let $\langle \cdot\rangle^{(t)}$ denote the expectation wrt the current
+(iteration $(t)$) values of the global parameters $\bphi=(\ba, \btheta, \bpi)$, that is,
+\begin{align*}
+    \langle f(\bz)\rangle^{(t)}
+    = 
+    \bbE\left\{ f(\bz) \mid \ba^{(t)}, \btheta^{(t)}, \bpi^{(t)}\right\}
+\end{align*}
+The $Q$ function is then given by
+\begin{align*}
+    Q(\bphi\mid\bphi^{(t)})
+    &=
+    \left\langle \ell(\ba,\btheta,\bpi) \right\rangle^{(t)} \\ 
+    &=
+    \sum_{c=0}^{1}\sum_{j=1}^{p}\left\langle \ind[z_j=c]\right\rangle^{(t)}\log\pi_c \\
+    &\quad + 
+    \sum_{c,d=0}^{1}\sum_{j<k} 
+    \left\langle\ind[z_j=c]\ind[z_k=d]\right\rangle^{(t)}
+    \log f_{cd}(p_{jk}\mid a_{cd}, \theta_j, \theta_k)
+\end{align*}
+Hence, the E-step requires the computation of posterior community assignment probability and the joint
+assignment probabilities. The joint assignment probabilities are much more complicated to compute,
+so a Variational EM is used instead.
+
+In variational inference, instead of working with the true posterior distribution, as is required by
+the standard EM algorithm, we use an approximate posterior instead. We choose an approximate posterior
+among a simpler family of distribution according to some criterion. In particular, we choose
+\begin{align*}
+    q(\bz\mid\btau^{(t)} ) =  \prod_{j=1}^{p} \prod_{c=0}^{1} \tau_{j,c}^{(t)\ind[z_j=c]}
+    \approx p(\bz\mid \bphi^{(t)})
+\end{align*}
+with $\tau_{j,c}^{(t)}\geqslant 0$ and $\sum_{c=0}^{1}\tau_{j,c}^{(t)}=1$, and 
+where the variational parameters $\btau^{(t)}$ are chosen to minimize the variational objective:
+\begin{align*}
+    \ELBO(\tau, \bphi)
+    &= 
+    \underbrace{\log p(\bP\mid \bphi)}_{\text{marginal log-likelihood}} 
+    - \underbrace{\KL(q(\cdot\mid\tau) \Vert p(\cdot\mid \bphi))}_{\text{post. approx. error}} \\ 
+    &= 
+    \underbrace{\cH(q)}_{\text{entropy}} 
+    + \underbrace{\bbE_q\left\{\log p(\bP, \bz\mid \bphi)\right\}}_{\text{exp. log joint likelihood}} 
+\end{align*}
+In standard EM, there is no approximation so the posterior approximation error is 0 and the VEM
+objective is simply the marginal likelihood: this is the same objective as EM. When an approximation
+is used, the the KL is positive and the ELBO becomes a lower bound to the evidence (marginal
+log-likelihood).
+
+
+Under the factorized form chosen for the approximate posterior, the last expectation is easier to 
+compute than the $Q$ function above. Indeed, by the independence across nodes, we get that the joint
+assignment probabilities equals the product of the marginals:
+\begin{align*}
+\bbE_q\{\ind[z_j=c]\} = \tau_{j,c},\qquad 
+    \bbE_q\{\ind[z_j=c]\ind[z_k=d] \} = \tau_{j,c}\tau_{k,d}
+\end{align*}
+Then, we need to compute the entropy of $q$:
+\begin{align*}
+    \cH(q)
+    &= 
+    -\bbE_q\{\log q(\bz\mid \btau)\} 
+    = -\sum_{j=1}^{p}\sum_{c=0}^{1} \tau_{jc}\log\tau_{jc}
+\end{align*}
+Hence, the evidence lower bound (ELBO) is given by
+\begin{align*}
+     \ELBO(\tau, \bphi)
+    &=
+    -\sum_{j=1}^{p}\sum_{c=0}^{1} \tau_{jc}\log\tau_{jc} +
+    \sum_{j=1}^{p}\sum_{c=0}^{1} \tau_{jc}\log\pi_{c} \\
+    &\quad +
+    \sum_{c,d=0}^{1}\sum_{j<k} \tau_{jc}\tau_{kd}\log f_{cd}(p_{jk}\mid a_{cd}, \theta_j, \theta_k)
+\end{align*}
+Similar to the VEM algorithm, the VEM algorithm alternates between the posterior and the global parameters:
+\begin{description}
+    \item[VE-step] Update the posterior approximation by solving
+    \begin{align*}
+        \btau^{(t+1)} = \underset{\btau}{\arg\max } \ELBO(\btau, \bphi^{(t)})
+    \end{align*}
+    \item[M-step] Update global parameters
+    \begin{align*}
+        \bphi^{(t+1)} = \underset{\bphi}{\arg\max}\ELBO(\btau^{(t+1)}, \bphi)
+    \end{align*}
+\end{description}
+
+\subsection{VE-step}
+
+As in Mariadassou (2010), a fixed point algorithm can be used. We need to remember that the $\btau$'s must
+satisfy simplex constraints within each node. We can first compute the derivatives:
+\begin{align*}
+    \frac{\partial}{\partial\tau_{jc}}
+    \ELBO(\tau,\bphi)
+    =
+    -\log\tau_{jc} - 1 +\log\pi_c + 
+    \sum_{k\neq j} \sum_{d=0}^{1} \tau_{kd}\log  f_{cd}(p_{jk}\mid a_{cd}, \theta_c,\theta_d)
+\end{align*}
+For the sum-to-one constraint, we include a Lagrange multiplier for each node:
+\begin{align*}
+    \ELBO(\btau,\bphi) + \sum_{j=1}^{p} \lambda_i (\btau_j^\top\bone - 1 )
+\end{align*}
+Taking derivatives yields
+\begin{align*}
+     \frac{\partial}{\partial\tau_{jc}}
+    \left(\sum_{j=1}^{p} \lambda_i (\btau_j^\top\bone - 1 )\right)
+    = \lambda_j
+\end{align*}
+We thus find the equation
+\begin{align*}
+    0 = 
+    -\log\tau_{jc} - 1 +\log\pi_c + 
+    \sum_{k\neq j} \sum_{d=0}^{1} \tau_{kd} \log f_{cd}(p_{jk}\mid a_{cd}, \theta_c,\theta_d)
+    + \lambda_j
+\end{align*}
+Hence, we get the implicit equation
+\begin{align*}
+    \tau_{jc} = \pi_c e^{\lambda_j-1} \prod_{k\neq j}\prod_{d=0}^{1} 
+    f_{cd}(p_{jk}\mid a_{cd}, \theta_c,\theta_d)^{\tau_{kd}}
+\end{align*}
+Thus, as long as $\pi_c\geqslant 0$, we get the positive constraint for $\btau$ for free. 
+The $e^{\lambda_j-1}$ term can absorb the sum-to-one constraint so that we get
+\begin{align*}
+    \tau_{jc} \propto \pi_c \prod_{k\neq j}\prod_{d=0}^{1} 
+    f_{cd}(p_{jk}\mid a_{cd}, \theta_c,\theta_d)^{\tau_{kd}}
+\end{align*} 
+
+\subsection{M-step}
+
+\subsubsection{Prior community probabilities}
+
+Similarly, we add a Lagrange multiplier for the sum-to-one constraint $\sum_c\pi_c=1$:
+the derivative wrt $\pi_c$ is given by
+\begin{align*}
+    \frac{\partial}{\partial\pi_c} \ELBO(\btau,\bphi)
+    &= 
+    \pi_c^{-1}\sum_{j=1}^{p}\tau_{jc}
+\end{align*}
+With the Lagrange multiplier, we get the equations
+\begin{align*}
+    \lambda\pi_c = \sum_{j=1}^{p} \tau_{jc}
+\end{align*}
+From the sum-to-one constraint, we get
+\begin{align*}
+    \pi_c \propto \sum_{j=1}^{p} \tau_{jc}
+\end{align*}
+
+The update for $\ba$ and $\btheta$ depend on the chosen models. Without strength correction,
+there should be analytical updates. With Sc, it probably is better to perform gradient updates
+until convergence (some re-parameterization might be helpful to encode constraints.) For example,
+we could define $a_{cd} = 1+\exp(b_{cd})$ and compute the derivative wrt $b_{cd}$.
+
+\subsection{Community rates: no strength correction case}
+
+In this scenario, the only parameter left is $\ba$. We need to assume $a_{cd}\geqslant 1$.
+First, $a_{00}=1$ is fixed to get a uniform distribution. Then, we are left with two parameters
+(by symmetry): both have the same update, so we focus on $a_{10}$. The first-order condition is given by
+\begin{align*}
+    0 = \sum_{j<k} (\tau_{j0}\tau_{k1} + \tau_{j1}\tau_{k0})
+    \frac{\frac{\partial}{\partial a_{10}}f_{10}(p_{jk}\mid a_{10})}{f_{10}(p_{jk}\mid a_{10})}
+\end{align*}
+\simon{to be continued ... }
+% ======================================================================================
+\section{Comments}
+% ======================================================================================
+
+\begin{itemize}
+    \item To decide null vs non-null, it might be better to use a specific threshold 
+    other than 0.5: the posterior community membership probability could be used 
+    similar to a $p$-value (there might 
+    be some sort of empirical Bayes or Bayes factor argument there)
+    \item This framework completely abstract the pairwise test: anything  
+    (parametric, non-parametric)could be used for the pairwise test
+    provided the $p$-values satisfy some properties yet TBD
+    \item This might be generalized to any problem with the following structure: we want node-level inference by aggregating edge-level tests
+    \item We could consider an increasing sequence of complexity (maybe some complexity is not necessary):
+    \begin{enumerate}
+        \item SBM with thresholded $p$-values
+        \item SCSBM with thresholded $p$-values
+        \item WSBM 
+        \item SCWSBM
+    \end{enumerate}
+    \item Then, we could study theoretical properties
+    \begin{itemize}
+        \item Community label accuracy will be related to Power and FDR
+        \item Posterior probability of labels could be used as some sort of node $p$-value?
+        \item The variational approximation might have the desirable effect of
+        producing independent posterior probabilities, so common FDR-correction 
+        methods could be applicable?
+    \end{itemize}
+\end{itemize}
+
+
+\end{document}
